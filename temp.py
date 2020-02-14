@@ -116,9 +116,6 @@ def linesp(img):
     canny = cv2.Canny(gray, 50,150, apertureSize = 3)
 #    thres = 100
 #    ret,gray = cv2.threshold(gray,thres,255,cv2.THRESH_BINARY)
-    cv2.imshow("canny", canny)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
     lines = cv2.HoughLinesP(canny, 1, np.pi/180, 80,None, 50, 1)
     return lines
     
@@ -127,7 +124,13 @@ for number in range(20,21):
     print("test"+str(number)+".png")
     img = imutils.resize(img, width=700)
 #    spell = SpellChecker()
+#    img = img[150:250,:]
     img1 = img.copy()
+    cv2.imshow("crop", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+#"""Label Detection and Processing"""
+    
     text = pytesseract.image_to_string(img)
     print(text)
     text = pytesseract.image_to_boxes(img)
@@ -141,38 +144,41 @@ for number in range(20,21):
         text.append(data[j].split(" "))
         
     data = ""
-#    print(text[0])
     X1,Y1 = int(text[0][1]),int(text[0][2])
     X2,Y2 = int(text[0][3]),int(text[0][4])
 #    print(text)
     for i in range(len(text)):
 #        print(abs(Y2-int(text[i][4])), abs(X2-int(text[0][1])))
 #        print(text[i][0])
+        
         data+=text[i][0]
+        h = int(text[i][4])-int(text[i][2])
+        w = int(text[i][3])-int(text[i][1])
         y_dist = abs(Y2-int(text[i][4]))
         x_dist = abs(X2-int(text[i][1]))
-        if y_dist<10 and x_dist<15:
-#            X1,Y1 = int(text[i][1]),int(text[i][2])
-            X2,Y2 = int(text[i][3]),int(text[i][4])
-#            print(text[i][0])
-            value+= text[i][0]
-        else:
-            if X1!=text[i][1] and len(value)>1:
-                label_box.append([X1,Y1,X2,Y2,"Label",value,"0"])
-            X1,Y1 = int(text[i][1]),int(text[i][2])
-            X2,Y2 = int(text[i][3]),int(text[i][4])
-#            print(text[i][0],"First")
-            value = ""
-            value+=text[i][0]
+        print(text[i][0],w,x_dist,y_dist)
+        if w<30:
+            if y_dist<20 and x_dist<20:
+    #            X1,Y1 = int(text[i][1]),int(text[i][2])
+                X2,Y2 = int(text[i][3]),int(text[i][4])
+    #            print(text[i][0])
+                value+= text[i][0]
+            else:
+                if len(value)>0:
+                    label_box.append([X1,Y1,X2,Y2,"Label",value,"0"])
+                X1,Y1 = int(text[i][1]),int(text[i][2])
+                X2,Y2 = int(text[i][3]),int(text[i][4])
+    #            print(text[i][0],"First")
+                value = ""
+                value+=text[i][0]
     label_box.append([X1,Y1,X2,Y2,"Label",value,"0"])
 #    print(data)
 #    print(label_box)
-    
-    
-#    contours = contour(img)
+
+
+#"""Line detection and processing"""    
     line = linesp(img)
     horiz_lines = []
-#    print(line)
     height = 30
     if line is not None:
         for j in range(0, len(line)):
@@ -181,25 +187,16 @@ for number in range(20,21):
             if abs(l[1]-l[3])<5 or abs(l[0]-l[2]<5):
                 horiz_lines.append(line[j][0])
 
-#    print(len(horiz_lines))
     df = pd.DataFrame(horiz_lines, columns=['X1','Y1','X2','Y2'])
     df = df.sort_values(by= ['Y1','X1']).reset_index(drop=True)
     x1,y1,x2,y2 = 0,0,0,0
-    deleted = []
     field_box = []
-    print("DataFrame:\n",df)
     i=0
     for row in df.iterrows():
         if abs(x1-row[1][0])<5 and abs(y1-row[1][1])<5:
-            
-            deleted.append([row[1][0],row[1][1],row[1][2],row[1][3]])
-            
             df = df.drop(df.index[i])
-            
-#            print("Dropped1",i)
-        elif abs(y1-row[1][1])<5 and (x1<=row[1][0] and x2>=row[1][3]):
+        elif abs(y1-row[1][1])<5 and (x1<=row[1][0] and x2>=row[1][2]):
             df = df.drop(df.index[i])
-#            print("Dropped2",i)
         elif abs(y1-row[1][1])<5 and (x1<=row[1][0] and x2>=row[1][0]):
             field_box.pop()
             field_box.append([x1, y1-20, row[1][2], y1, "Field", np.nan, 0])
@@ -210,6 +207,15 @@ for number in range(20,21):
                 field_box.append([row[1][0], y1-20, x2, y1, "Field", np.nan, 0])
             else:
                 field_box.append([row[1][0], y1-20, row[1][2], y1, "Field", np.nan, 0])
+        elif abs(y1-row[1][1])<5 and abs(x2-row[1][0])<5:
+            field_box.pop()
+            field_box.append([x1, y1-20, row[1][2], y1, "Field", np.nan, 0])
+            df = df.drop(df.index[i])
+        
+        elif abs(y1-row[1][1])<5 and abs(x1-row[1][2])<5:
+            field_box.pop()
+            field_box.append([row[1][0], y1-20, x2, y1, "Field", np.nan, 0])
+            df = df.drop(df.index[i])
         else:
             x1 = row[1][0]
             y1 = row[1][1]
@@ -217,26 +223,15 @@ for number in range(20,21):
             y2 = row[1][3]
             i+=1
             field_box.append([x1,y1-20,x2,y2,"Field",np.nan,0])
-    for row in field_box:
-        cv2.line(img1, (row[0],row[1]), (row[2],row[3]), (0,0,255), 2, cv2.LINE_AA)
-
+    
     
     with open('data'+str(number) + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["X1", "Y1", "X2", "Y2", "Type", "Value", "Group"])
         writer.writerows(label_box)
         writer.writerows(field_box)
-
-#    print(df)
-    
-#    print(deleted)
+        
     cnt = contour(img)
-    
-    
-    
-    
-    
-    
 
 
     cv2.imshow("p", img1)
