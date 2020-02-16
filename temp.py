@@ -23,23 +23,47 @@ def contour(img):
     contours = imutils.grab_contours(contours)
     return contours
 def findCircle(cnts,img1):
-    print("Empty")
-"""    center = None
     if len(cnts) == 0:
         print("No contour found!!")
-        break
     else:
+        print("Starting circle search")
+        img = img1.copy()
+        circles = []
 		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle andSub1v4V
 		# centroid
-        c = max(cnts, key=cv2.contourArea)
-        ((x, y), radius) = cv2.minEnclosingCircle(c)
-        M = cv2.moments(c)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        for i in range(len(cnts)):
+            print("Inside Loop")
+            c = max(cnts, key=cv2.contourArea)
+            ((x, y), radius) = cv2.minEnclosingCircle(c)
+            M = cv2.moments(c)
+            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+            c_area = cv2.contourArea(c)
+            c_area = c_area/((3.14)*radius*radius)
+            if radius>3:
+                if radius<25:
+                    if c_area>0.65:
+                        circles.append([int(x), int(y), radius, radius, "OMR", np.nan, 0])
+                        cv2.circle(img, (int(x), int(y)), int(radius),(0,0,255), 1)
+#                        cv2.circle(imgout,(int(x), int(y)), int(radius),(0,0,255), 2)
+#                        cv2.circle(imgout, center, 5, (0, 0, 255), -1)
+                        cv2.circle(img, center, 5, (0, 0, 255), -1)
+#                        cv2.ellipse(img3,ellipse,(255,0,0),2)
+                        cv2.imshow("contour", img)
+                        cv2.waitKey(0)
+                        cv2.destroyAllWindows()
+            else:
+                print("Small Contours Found")
+            cnts.remove(c)
+        return circles
+
+
+"""
+            
         cv2.drawContours(mask, [c], -1, 0, -1)
         img1 = cv2.bitwise_and(img1, img1, mask=mask)
-        c_area = cv2.contourArea(c)
-        c_area = c_area/((3.14)*radius*radius)
+        
+        
 		#Calculate ratio of area to evaluate confidence
         e_area = 0
 		#Ellipse cannot be fitted always so try for that or else we go with circle
@@ -59,22 +83,7 @@ def findCircle(cnts,img1):
         except:
 			#A = []
             print("Small ellipse found")
-            if radius>3:
-                if radius<25:
-                    if c_area>0.65:
-                        img = img1.copy()
-                        cv2.circle(img, (int(x), int(y)), int(radius),255, 2)
-                        cv2.circle(imgout,(int(x), int(y)), int(radius),(0,0,255), 2)
-                        cv2.circle(imgout, center, 5, (0, 0, 255), -1)
-                        cv2.circle(img3,(int(x), int(y)), int(radius),(0,0,255), 2)
-                        cv2.circle(img3, center, 5, (0, 0, 255), -1)
-                        cv2.ellipse(img3,ellipse,(255,0,0),2)
-                        cv2.imshow("contour", imgout)
-                        cv2.waitKey(0)
-            else:
-                print("Small Contours Found")
-                break
-        
+                    
 def boxDetect(c):
     peri = cv2.arcLength(c, True)
     approx = cv2.approxPolyDP(c, 0.04 * peri, True)
@@ -192,97 +201,102 @@ for number in range(16,21):
     i=0
     print(df)
     for row in df.itertuples():
-        print(row[0])
-        if abs(x1-row[1])<5 and abs(y1-row[2])<5:
-            df = df.drop(row[0])
-            print("Row Deleted",row[0])
-        elif abs(y1-row[2])<5 and (x1<=row[1] and x2>=row[3]):
-            df = df.drop(row[0])
-            print("Row Deleted",row[0])
-        elif abs(y1-row[0])<5 and (x1<=row[1] and x2>=row[1]):
-            field_box.pop()
-            field_box.append([x1, y1-20, row[3], y1, "Field", np.nan, 0])
-            df = df.drop(row[0])
-            print("Row Deleted",row[0])
-        elif abs(y1-row[0])<5 and (x1>=row[1] and x1<=row[3]):
-            field_box.pop()
-            if x2>row[3]:
+        if row[0] in df.index:
+            print(row[0])
+            if abs(x1-row[1])<5 and abs(y1-row[2])<5:
+                df = df.drop(row[0])
+                print("Row Deleted",row[0])
+            elif abs(y1-row[2])<5 and (x1<=row[1] and x2>=row[3]):
+                df = df.drop(row[0])
+                print("Row Deleted",row[0])
+            elif abs(y1-row[0])<5 and (x1<=row[1] and x2>=row[1]):
+                field_box.pop()
+                field_box.append([x1, y1-20, row[3], y1, "Field", np.nan, 0])
+                df = df.drop(row[0])
+                print("Row Deleted",row[0])
+            elif abs(y1-row[0])<5 and (x1>=row[1] and x1<=row[3]):
+                field_box.pop()
+                if x2>row[3]:
+                    field_box.append([row[1], y1-20, x2, y1, "Field", np.nan, 0])
+                else:
+                    field_box.append([row[1], y1-20, row[3], y1, "Field", np.nan, 0])
+                df.drop(row[0])
+                print("Row Deleted",row[0])
+            elif abs(y1-row[2])<5 and abs(x2-row[3])<5:
+                field_box.pop()
+                field_box.append([x1, y1-20, row[3], y1, "Field", np.nan, 0])
+                df = df.drop(row[0])
+                print("Row Deleted",row[0])
+            elif abs(y1-row[2])<5 and abs(x1-row[3])<5:
+                field_box.pop()
                 field_box.append([row[1], y1-20, x2, y1, "Field", np.nan, 0])
+                df = df.drop(row[0])
+                print("Row Deleted",row[0])
+            elif abs(row[2]-row[4])>10:
+                df.drop(row[0])
             else:
-                field_box.append([row[1], y1-20, row[3], y1, "Field", np.nan, 0])
-            df.drop(row[0])
-            print("Row Deleted",row[0])
-        elif abs(y1-row[2])<5 and abs(x2-row[3])<5:
-            field_box.pop()
-            field_box.append([x1, y1-20, row[3], y1, "Field", np.nan, 0])
-            df = df.drop(row[[0]])
-            print("Row Deleted",row[0])
-        elif abs(y1-row[2])<5 and abs(x1-row[3])<5:
-            field_box.pop()
-            field_box.append([row[1], y1-20, x2, y1, "Field", np.nan, 0])
-            df = df.drop(row[0])
-            print("Row Deleted",row[0])
-        else:
-            index_v = row[0]
-            try:
-#                print(abs(y1-df.iloc[index_v][1]), df.iloc[index_v][1])
-                while(index_v < df.last_valid_index() and abs(y1-df.loc[index_v][1])<10):
-                    if index_v in df.index:
-                        print(row[0]-1, y1,index_v, df.loc[index_v][1])
-                        if abs(x1-df.loc[index_v][0])<5 and abs(y1-df.loc[index_v][1])<5:
-                            df = df.drop(index_v)
-                            print(df)
-                            print("one")
-                        elif abs(y1-df.loc[index_v][1])<5 and (x1<=df.loc[index_v][0] and x2>=df.loc[index_v][2]):
-                            df = df.drop(index_v)
-                            print("Two")
-                        elif abs(y1-df.loc[index_v][1])<5 and (x1<=df.loc[index_v][0] and x2>=df.loc[index_v][0]):
-                            field_box.pop()
-                            field_box.append([x1, y1-20, df.loc[index_v][2], y1, "Field", np.nan, 0])
-                            df = df.drop(index_v)
-                            print("Three")
-                        elif abs(y1-df.loc[index_v][1])<5 and (x1>=df.loc[index_v][0] and x1<=df.loc[index_v][2]):
-                            field_box.pop()
-                            if x2>df.loc[index_v][2]:
+                index_v = row[0]
+                try:
+    #                print(abs(y1-df.iloc[index_v][1]), df.iloc[index_v][1])
+                    while(index_v < df.last_valid_index() and abs(y1-df.loc[index_v][1])<10):
+                        if index_v in df.index:
+                            print(row[0]-1, y1,index_v, df.loc[index_v][1])
+                            if abs(x1-df.loc[index_v][0])<5 and abs(y1-df.loc[index_v][1])<5:
+                                df = df.drop(index_v)
+                                print(df)
+                                print("one")
+                            elif abs(y1-df.loc[index_v][1])<5 and (x1<=df.loc[index_v][0] and x2>=df.loc[index_v][2]):
+                                df = df.drop(index_v)
+                                print("Two")
+                            elif abs(y1-df.loc[index_v][1])<5 and (x1<=df.loc[index_v][0] and x2>=df.loc[index_v][0]):
+                                field_box.pop()
+                                field_box.append([x1, y1-20, df.loc[index_v][2], y1, "Field", np.nan, 0])
+                                df = df.drop(index_v)
+                                print("Three")
+                            elif abs(y1-df.loc[index_v][1])<5 and (x1>=df.loc[index_v][0] and x1<=df.loc[index_v][2]):
+                                field_box.pop()
+                                if x2>df.loc[index_v][2]:
+                                    field_box.append([df.loc[index_v][0], y1-20, x2, y1, "Field", np.nan, 0])
+                                else:
+                                    field_box.append([df.loc[index_v][0], y1-20, df.loc[index_v][2], y1, "Field", np.nan, 0])
+                                df = df.drop(index_v)
+                                print("Four")
+                            elif abs(y1-df.loc[index_v][1])<5 and abs(x2-df.loc[index_v][0])<5:
+                                field_box.pop()
+                                field_box.append([x1, y1-20, df.loc[index_v][2], y1, "Field", np.nan, 0])
+                                df = df.drop(index_v)
+                                print("Five")
+                            elif abs(y1-df.loc[index_v][1])<5 and abs(x1-df.loc[index_v][2])<5:
+                                field_box.pop()
                                 field_box.append([df.loc[index_v][0], y1-20, x2, y1, "Field", np.nan, 0])
+                                df = df.drop(index_v)
+                                print("six")
                             else:
-                                field_box.append([df.loc[index_v][0], y1-20, df.loc[index_v][2], y1, "Field", np.nan, 0])
-                            df = df.drop(index_v)
-                            print("Four")
-                        elif abs(y1-df.loc[index_v][1])<5 and abs(x2-df.loc[index_v][0])<5:
-                            field_box.pop()
-                            field_box.append([x1, y1-20, df.loc[index_v][2], y1, "Field", np.nan, 0])
-                            df = df.drop(index_v)
-                            print("Five")
-                        elif abs(y1-df.loc[index_v][1])<5 and abs(x1-df.loc[index_v][2])<5:
-                            field_box.pop()
-                            field_box.append([df.loc[index_v][0], y1-20, x2, y1, "Field", np.nan, 0])
-                            df = df.drop(index_v)
-                            print("six")
-                        else:
-                            pass
-                    index_v+=1
-            except:
-                print("Index Out of Bounds")
-            try:
-                x1 = df.loc[row[0]][0]
-                y1 = df.loc[row[0]][1]
-                x2 = df.loc[row[0]][2]
-                y2 = df.loc[row[0]][3]
-                field_box.append([x1,y1-20,x2,y2,"Field",np.nan,0])
-            except:
-                pass
+                                pass
+                        index_v+=1
+                except:
+                    print("Index Out of Bounds")
+                try:
+                    x1 = df.loc[row[0]][0]
+                    y1 = df.loc[row[0]][1]
+                    x2 = df.loc[row[0]][2]
+                    y2 = df.loc[row[0]][3]
+                    field_box.append([x1,y1-20,x2,y2,"Field",np.nan,0])
+                except:
+                    pass
             
     print(df)
-
+    for row in field_box:
+        cv2.line(img1, (row[0],row[1]),(row[2],row[3]),(0,255,0),2)
+    cv2.imwrite("img"+str(number)+".png",img1)
     with open('data'+str(number) + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["X1", "Y1", "X2", "Y2", "Type", "Value", "Group"])
         writer.writerows(label_box)
         writer.writerows(field_box)
         
-    cnt = contour(img)
-
+    cnt = contour(img1)
+    circles = findCircle(cnt, img1)
 
     cv2.imshow("p", img1)
     cv2.waitKey(0)
