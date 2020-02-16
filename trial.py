@@ -118,7 +118,7 @@ def linesp(img):
     lines = cv2.HoughLinesP(canny, 1, np.pi/180, 80,None, 50, 1)
     return lines
     
-for number in range(16,21):
+for number in range(20,21):
     img = cv2.imread("test"+str(number)+".png")
     print("test"+str(number)+".png")
     img = imutils.resize(img, width=700)
@@ -189,8 +189,8 @@ for number in range(16,21):
     df = df.sort_values(by= ['Y1','X1']).reset_index(drop=True)
     x1,y1,x2,y2 = 0,0,0,0
     field_box = []
-    i=0
     print(df)
+#    print(df.iloc[3][1])
     for row in df.itertuples():
         print(row[0])
         if abs(x1-row[1])<5 and abs(y1-row[2])<5:
@@ -274,7 +274,6 @@ for number in range(16,21):
                 pass
             
     print(df)
-
     with open('data'+str(number) + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["X1", "Y1", "X2", "Y2", "Type", "Value", "Group"])
@@ -305,4 +304,5 @@ for number in range(16,21):
 #text = pytesseract.image_to_string(img)
 #print(text)
 #text = ' '.join(map(spell.correction, text.split()))
+
 
