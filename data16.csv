@@ -11,11 +11,8 @@ X1,Y1,X2,Y2,Type,Value,Group
 138,130,515,150,Field,nan,0
 140,161,515,181,Field,nan,0
 137,179,304,199,Field,nan,0
-369,179,601,199,Field,nan,0
+442,179,598,199,Field,nan,0
 365,206,599,226,Field,nan,0
 138,208,304,228,Field,nan,0
-365,208,418,228,Field,nan,0
 83,350,636,370,Field,nan,0
-634,633,634,374,Field,nan,0
-85,635,85,373,Field,nan,0
-83,637,636,657,Field,nan,0
+87,636,636,656,Field,nan,0
