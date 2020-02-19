@@ -43,8 +43,8 @@ def detect_circles(image):
         cv2.rectangle(img,tuple(coordinate[i][0]),tuple(coordinate[i][1]),(0,255,0),2)
     return img,coordinate
 
-image=cv2.imread("test21.jpg")
-image=imutils.resize(image, width = 1000)
+image=cv2.imread("test20.jpg")
+#image=imutils.resize(image, width = 1000)
 rectangle_image,rec_coordinate=detect_rectangles(image)
 #image=cv2.imread("Test1.jpg")  
 #image=imutils.resize(image, width = 1000)

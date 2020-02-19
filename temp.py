@@ -100,8 +100,34 @@ def linesp(img):
 #    ret,gray = cv2.threshold(gray,thres,255,cv2.THRESH_BINARY)
     lines = cv2.HoughLinesP(canny, 1, np.pi/180, 80,None, 50, 1)
     return lines
+def detect_rectangles(image):
     
-for number in range(2,3):
+    img=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    _, threshold = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
+    contours,_=cv2.findContours(threshold,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    coordinate=[]
+    co=0
+    for cnt in contours:
+
+        approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        if len(approx) == 4 and cv2.contourArea(cnt)>100:
+            '''if 2000+co > cv2.contourArea(cnt) > co:         
+                continue
+                co=cv2.contourArea(cnt)'''# try changing the value in place of 2000 to get outer rectangles
+            coordinate.append((approx[0][0],approx[2][0]))
+            
+    print(coordinate[0][0])# top-left coordinate of 1 rectangle
+    print(coordinate[0][1])# bottom-right coordinate of 1 rectangle
+    print(coordinate[1][0])# top-left coordinate of 2 rectangle
+    print(coordinate[1][1])# bottom-right coordinate of 2 rectangle
+    #and so on
+    for i in range(len(coordinate)):
+        cv2.circle(img,tuple(coordinate[i][0]),5,(0,255,0),5)
+        cv2.circle(img,tuple(coordinate[i][1]),5,(0,255,0),5)
+    return img,coordinate
+
+    
+for number in range(22,23):
     img = cv2.imread("test"+str(number)+".jpg")
     print("test"+str(number)+".png")
     width = 1000
@@ -192,17 +218,16 @@ for number in range(2,3):
     print(df)
     for row in df.itertuples():
         index_v = row[0]
-        if row[0] == 17:
+        if row[0] == 35:
             print("Hello")
         try:
             while(index_v in df.index and abs(y1-df.loc[index_v][1])<10):
                 if index_v in df.index:
                     print(row[0]-1, y1,index_v, df.loc[index_v][1])
-                    if abs(x1-df.loc[index_v][0])<diff and abs(y1-df.loc[index_v][1])<diff:
-                        if abs(x2-df.loc[index_v][2])<diff and abs(y2-df.loc[index_v][3])<diff:
-                            df = df.drop(index_v)
-                            print(df)
-                            print("one")
+                    if abs(x1-df.loc[index_v][0])<diff and abs(y1-df.loc[index_v][1])<diff and abs(x2-df.loc[index_v][2])<diff and abs(y2-df.loc[index_v][3])<diff:
+                        df = df.drop(index_v)
+                        print(df)
+                        print("one")
                     elif abs(y1-df.loc[index_v][1])<diff and (x1<=df.loc[index_v][0] and x2>=df.loc[index_v][2]):
                         df = df.drop(index_v)
                         print("Two")
@@ -210,7 +235,8 @@ for number in range(2,3):
                         field_box.pop()
                         if x2<df.iloc[index_v][2]:
                             field_box.append([x1, y1-height, df.loc[index_v][2], y1, "Field", np.nan, 0])
-                            df.iloc[index_curr] = [x1, y1, df.loc[index_v][2], y1]
+                            x2 = df.loc[index_v][2]
+                            df.loc[index_curr] = [x1, y1, df.loc[index_v][2], y1]
                             df = df.drop(index_v)
                         else:
                             df = df.drop(index_v)
@@ -219,7 +245,8 @@ for number in range(2,3):
                         field_box.pop()
                         if x2>df.loc[index_v][2]:
                             field_box.append([df.loc[index_v][0], y1-height, x2, y1, "Field", np.nan, 0])
-                            df.iloc[index_curr] = [df.loc[index_v][0], y1, x2, y1]
+                            x1 = df.loc[index_v][0]
+                            df.loc[index_curr] = [df.loc[index_v][0], y1, x2, y1]
                             df = df.drop(index_v)
                         else:
                             field_box.append([df.loc[index_v][0], y1-height, df.loc[index_v][2], y1, "Field", np.nan, 0])
@@ -228,6 +255,7 @@ for number in range(2,3):
                     elif abs(y1-df.loc[index_v][1])<diff and abs(x2-df.loc[index_v][0])<diff:
                         field_box.pop()
                         field_box.append([x1, y1-height, df.loc[index_v][2], y1, "Field", np.nan, 0])
+                        x2 = df.loc[index_v][2]
                         df.loc[index_curr] = [x1, y1, df.loc[index_v][2], y1]
                         df = df.drop(index_v)
                         print("Five")
@@ -235,6 +263,7 @@ for number in range(2,3):
                         field_box.pop()
                         field_box.append([df.loc[index_v][0], y1-height, x2, y1, "Field", np.nan, 0])
                         df.loc[index_curr]= [df.loc[index_v][0], y1, x2, y1]
+                        x1 = df.loc[index_v][0]
                         df = df.drop(index_v)
                         print(df)
                     else:
@@ -257,7 +286,7 @@ for number in range(2,3):
     print("Looop Restart")
     for row in df.itertuples():
         index_v = row[0]
-        if row[0] == 17:
+        if row[0] == 35:
             print("Hello")
         try:
             while(index_v in df.index and abs(y1-df.loc[index_v][1])<10):
@@ -274,7 +303,8 @@ for number in range(2,3):
                         field_box.pop()
                         if x2<df.iloc[index_v][2]:
                             field_box.append([x1, y1-height, df.loc[index_v][2], y1, "Field", np.nan, 0])
-                            df.iloc[index_curr] = [x1, y1, df.loc[index_v][2], y1]
+                            df.loc[index_curr] = [x1, y1, df.loc[index_v][2], y1]
+                            x2 = df.loc[index_v][2]
                             df = df.drop(index_v)
                         else:
                             df = df.drop(index_v)
@@ -283,7 +313,8 @@ for number in range(2,3):
                         field_box.pop()
                         if x2>df.loc[index_v][2]:
                             field_box.append([df.loc[index_v][0], y1-height, x2, y1, "Field", np.nan, 0])
-                            df.iloc[index_curr] = [df.loc[index_v][0], y1, x2, y1]
+                            df.loc[index_curr] = [df.loc[index_v][0], y1, x2, y1]
+                            x1 = df.loc[index_v][0]
                             df = df.drop(index_v)
                         else:
                             field_box.append([df.loc[index_v][0], y1-height, df.loc[index_v][2], y1, "Field", np.nan, 0])
@@ -293,12 +324,14 @@ for number in range(2,3):
                         field_box.pop()
                         field_box.append([x1, y1-height, df.loc[index_v][2], y1, "Field", np.nan, 0])
                         df.loc[index_curr] = [x1, y1, df.loc[index_v][2], y1]
+                        x2 = df.loc[index_v][2]
                         df = df.drop(index_v)
                         print("Five")
                     elif abs(y1-df.loc[index_v][1])<diff and abs(x1-df.loc[index_v][2])<diff:
                         field_box.pop()
                         field_box.append([df.loc[index_v][0], y1-height, x2, y1, "Field", np.nan, 0])
                         df.loc[index_curr]= [df.loc[index_v][0], y1, x2, y1]
+                        x1 = df.loc[index_v][0]
                         df = df.drop(index_v)
                         print(df)
                     else:
