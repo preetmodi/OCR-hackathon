@@ -20,64 +20,26 @@ def findCircle(cnts,img1):
         print("Starting circle search")
         img = img1.copy()
         circles = []
-		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle andSub1v4V
-		# centroid
         for c in cnts:
-            print("Inside Loop")
             ((x, y), radius) = cv2.minEnclosingCircle(c)
             M = cv2.moments(c)
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
             c_area = cv2.contourArea(c)
             c_area = c_area/((3.14)*radius*radius)
             if radius>10:
-                print("radius > 3")
                 if radius<50:
-                    print("Radius < 50")
                     if c_area>0.65:
-                        print("C_area > 0.65")
-                        circles.append([int(x), int(y), radius, radius, "OMR", np.nan, 0])
+                        circles.append([int(x)-int(radius), int(y)-int(radius), int(2*radius),int(2*radius), "radio", np.nan, 0])
                         cv2.circle(img, (int(x), int(y)), int(radius),(0,0,255), 1)
-#                        cv2.circle(imgout,(int(x), int(y)), int(radius),(0,0,255), 2)
-#                        cv2.circle(imgout, center, 5, (0, 0, 255), -1)
                         cv2.circle(img, center, 5, (0, 0, 255), -1)
-#                        cv2.ellipse(img3,ellipse,(255,0,0),2)
-                        
-            else:
-                print("Small Contours Found")
         cv2.imshow("contour", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         cv2.imwrite("circle.png",img)
-        print(len(circles))
         return circles
     
-"""
-            
-        cv2.drawContours(mask, [c], -1, 0, -1)
-        img1 = cv2.bitwise_and(img1, img1, mask=mask)
-        
-        
-		#Calculate ratio of area to evaluate confidence
-        e_area = 0
-		#Ellipse cannot be fitted always so try for that or else we go with circle
-        try:
-            ellipse = cv2.fitEllipse(c)
-            (a,b),(ma,mb), angle = ellipse
-            e_area = cv2.contourArea(c)
-            e_area = 4*e_area/(3.14*ma*mb)
-            if radius>3 and radius<25:
-                if c_area >0.6 and e_area > 0.81:
-                    img = img1.copy()
-                    cv2.circle(img, (int(x), int(y)), int(radius),255, 2)
-                    cv2.circle(img1,(int(x), int(y)), int(radius),(0,0,255), 2)
-            else:
-                print("Small Contours Found")
-                break
-        except:
-			#A = []
-            print("Small ellipse found")
-                    
+"""                    
 def boxDetect(c):
     peri = cv2.arcLength(c, True)
     approx = cv2.approxPolyDP(c, 0.04 * peri, True)
@@ -87,8 +49,6 @@ def boxDetect(c):
     else:
         return 0,0,0,0 
 """
-
-
 
 def linesp(img):
 #    img1 = img.copy()
@@ -104,7 +64,6 @@ def detect_rectangles(image):
     _, threshold = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
     contours,_=cv2.findContours(threshold,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
     coordinate=[]
-    co=0
     for cnt in contours:
 
         approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
@@ -129,7 +88,7 @@ for number in range(22,23):
     img = cv2.imread("test"+str(number)+".jpg")
     print("test"+str(number)+".png")
     width = 1000
-    height = 50
+    height = 30
     diff = 30
     img = imutils.resize(img, width=width)
     img3 = img.copy()
@@ -179,13 +138,13 @@ for number in range(22,23):
                 value+= text[i][0] 
             else:
                 if len(value)>1:
-                    label_box.append([X1,Y1,X2,Y2,"Label",value,"0"])
+                    label_box.append([X1,Y1,X2-X1,Y2-Y1,"label",value,"0"])
                 X1,Y1 = int(text[i][1]),int(text[i][2])
                 X2,Y2 = int(text[i][3]),int(text[i][4])
     #            print(text[i][0],"First")
                 value = ""
                 value+=text[i][0]
-    label_box.append([X1,Y1,X2,Y2,"Label",value,"0"])
+    label_box.append([X1,Y1,X2-X1,Y2-Y1,"label",value,"0"])
 #    print(data)
 #    print(label_box)
     
@@ -201,7 +160,7 @@ for number in range(22,23):
     for row in df_box.itertuples():
         index_v = row[0]
         if row[1]<10 and row[2]<10:
-            df_box = df_box.drop(row[0])        
+            df_box = df_box.drop(row[0])
         try:
             while(index_v in df_box.index and abs(y1-df_box.loc[index_v][1])<10):
                 if index_v in df_box.index:
@@ -389,8 +348,7 @@ for number in range(22,23):
 #        except:
 #            pass
     
-    start = df.iloc[0]
-    end = df.loc[df.last_valid_index()]
+   
     count = 0
     for row in df_box.itertuples():
         for rows in df.itertuples():
@@ -403,17 +361,36 @@ for number in range(22,23):
                     count+=1
                 else:
                     pass
-    print(count)
+    checkbox = []
+    for row in df_box.itertuples():
+        w = row[3] - row[1]
+        if w < 60:
+            checkbox.append([row[1],row[2],row[3],row[4],"checkbox",np.nan,0])
+            df_box.drop(row[0])
+    start = df_box.iloc[0]
     print(df)
+    df['Y1'] = df['Y1'] - height
+    print(df)
+    df_box = df_box.drop(df_box.index[0])
+    df_box = df_box.append(df)
+    df_box = df_box.sort_values(by= ['Y1','X1']).reset_index(drop=True)
+    df_box['Type'] = 'field'
+    df_box['Value'] = np.nan
+    df_box['Group'] = 0
+    field_box = df_box.values.tolist() 
+    print(field_box)
+    cnt = contour(img1)
+    circles = findCircle(cnt, img1)
     cv2.imwrite("img"+str(number)+".png",img1)
     with open('data'+str(number) + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["X1", "Y1", "X2", "Y2", "Type", "Value", "Group"])
         writer.writerows(label_box)
         writer.writerows(field_box)
+        writer.writerows(circles)
+        writer.writerows(checkbox)
     
-    cnt = contour(img1)
-    circles = findCircle(cnt, img1)
+    
     cv2.imshow("p", img1)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
