@@ -252,6 +252,43 @@ def get_checkbox(df_box):
             checkbox.append([row[1]-5,row[2]-5,abs(row[4]-row[2])+10,abs(row[3]-row[1]+10),"checkbox",np.nan,0])
             df_box = df_box.drop(row[0])
     return df_box,checkbox
+def generate_label_box(data,height):
+    text = []
+    label_box = []
+    value = ""
+    
+    
+
+    for j in range(len(data)):
+        text.append(data[j].split(" "))    
+    data = ""
+    X1,Y1 = int(text[0][1]),int(text[0][2])
+    X2,Y2 = int(text[0][3]),int(text[0][4])
+    for i in range(len(text)):        
+        data+=text[i][0]
+        w = int(text[i][3])-int(text[i][1])
+        y_dist = abs(Y2-int(text[i][4]))
+        x_dist = abs(X2-int(text[i][1]))
+        if w<40:
+            if text[i][0].isdigit():
+                continue
+            if y_dist<height and x_dist<height:
+                X2,Y2 = int(text[i][3]),int(text[i][4])
+                value+= text[i][0] 
+            else:
+                if len(value)>1:
+                    if (Y2-Y1)<25:
+                        label_box.append([X1,Y1,25,X2-X1,"label",value,"0"])
+                    else:
+                        label_box.append([X1,Y1,Y2-Y1,X2-X1,"label",value,"0"])
+                X1,Y1 = int(text[i][1]),int(text[i][2])
+                X2,Y2 = int(text[i][3]),int(text[i][4])
+                value = ""
+                value+=text[i][0]
+    label_box.append([X1,Y1,Y2-Y1,X2-X1,"label",value,"0"])
+    df = pd.DataFrame(label_box, columns = ['X1','Y1','X2','Y2','Type','value','group'])
+    return df
+
 for number in range(20,23):
     img = cv2.imread("test"+str(number)+".jpg")
     print("test"+str(number)+".png")
@@ -294,7 +331,7 @@ for number in range(20,23):
 
 #    """FORM BOX """
     start = df_box.iloc[0]
-    print(start[0])
+    print(start)
 #    """CONVERSION TO H,W FROM X2,Y2"""
     df['Y1'] = df['Y1'] - height
     df['Y2'] = df['Y2'] + 10
@@ -342,42 +379,9 @@ for number in range(20,23):
     cv2.destroyAllWindows()
     text = pytesseract.image_to_boxes(threshold, config= '--psm 1')
     data = text.split('\n')
-    text = []
-    label_box = []
-    value = ""
     height= 25
+    df = generate_label_box(data,height)
     
-
-    for j in range(len(data)):
-        text.append(data[j].split(" "))    
-    data = ""
-    X1,Y1 = int(text[0][1]),int(text[0][2])
-    X2,Y2 = int(text[0][3]),int(text[0][4])
-    for i in range(len(text)):        
-        data+=text[i][0]
-        h = int(text[i][4])-int(text[i][2])
-        w = int(text[i][3])-int(text[i][1])
-        y_dist = abs(Y2-int(text[i][4]))
-        x_dist = abs(X2-int(text[i][1]))
-        if w<40:
-            if text[i][0].isdigit():
-                continue
-            if y_dist<height and x_dist<height:
-                X2,Y2 = int(text[i][3]),int(text[i][4])
-                value+= text[i][0] 
-            else:
-                if len(value)>1:
-                    if (Y2-Y1)<25:
-                        label_box.append([X1,Y1,25,X2-X1,"label",value,"0"])
-                    else:
-                        label_box.append([X1,Y1,Y2-Y1,X2-X1,"label",value,"0"])
-                X1,Y1 = int(text[i][1]),int(text[i][2])
-                X2,Y2 = int(text[i][3]),int(text[i][4])
-                value = ""
-                value+=text[i][0]
-    label_box.append([X1,Y1,Y2-Y1,X2-X1,"label",value,"0"])
-    df = pd.DataFrame(label_box, columns = ['X1','Y1','X2','Y2','Type','value','group'])
-
     y,x = threshold.shape
     df['Y1'] = y - 25 - df['Y1']
     df['X1'] = df['X1'] - 5
@@ -393,7 +397,10 @@ for number in range(20,23):
         writer.writerows(label_box)    
 
     df_box= pd.read_csv('data'+str(number) + '.csv')
-    
+    if number!=20:
+        df_box['top'] = df_box['top']-start[1]
+        df_box['left'] = df_box['left']-start[0]
+    img1 = img1[start[1]:start[3],start[0]:start[2]]
     for row in df_box.itertuples():
         cv2.rectangle(img1, (row[1],row[2]),(row[1]+row[4],row[2]+row[3]),(0,0,255),1)
     cv2.imshow("Display", img1)
