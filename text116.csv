@@ -1,0 +1,9 @@
+428,942,13,154,label,FeedbackForm,0
+120,793,11,51,label,Name,0
+121,728,11,55,label,Phone,0
+459,726,16,46,label,Email,0
+118,649,16,409,label,Wereyousatisfiedwiththecustomrsevice?,0
+173,584,22,39,label,Yes,0
+292,593,11,24,label,No,0
+399,593,13,95,label,Somewhat,0
+118,536,13,95,label,Comments,0

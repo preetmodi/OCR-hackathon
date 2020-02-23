@@ -1,0 +1,17 @@
+412,81,35,176,label,FeedbackForm,0
+581,153,35,53,label,Date,0
+80,237,35,70,label,Name:,0
+80,314,35,143,label,Enrollmentno,0
+78,380,35,292,label,Whatdidyoulikeverymuch?,0
+152,433,35,132,label,Environment,0
+440,433,35,151,label,Administration,0
+712,431,35,222,label,Attitudeofemployees,0
+152,488,35,141,label,Infrastructure,0
+438,486,35,217,label,TalentandInnovation,0
+75,574,35,341,label,Ratesupportivenessofemployees.,0
+70,639,35,444,label,Ratetheimpactofprojectscompanytsdoing.,0
+70,712,35,380,label,Ratetheoverallexperienceofthevisit.,0
+70,788,35,341,label,Ratequalityofprovidedresources.,0
+70,852,35,663,label,Howmuchlikelydoyourecommendthecompanyfortheirservices?,0
+76,974,35,287,label,Anyconstructivesuggestions,0
+756,1255,20,100,label,SignHere,0
